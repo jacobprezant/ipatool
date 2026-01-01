@@ -78,9 +78,7 @@ func loginCmd() *cobra.Command {
 				}
 
 				dependencies.Logger.Verbose().
-					Str("password", password).
 					Str("email", email).
-					Str("authCode", util.IfEmpty(authCode, "<nil>")).
 					Msg("logging in")
 
 				output, err := dependencies.AppStore.Login(appstore.LoginInput{
@@ -159,6 +157,12 @@ func revokeCmd() *cobra.Command {
 			err := dependencies.AppStore.Revoke()
 			if err != nil {
 				return err
+			}
+
+			cookieJarPath := dependencies.Machine.HomeDirectory() + string(os.PathSeparator) +
+				ConfigDirectoryName + string(os.PathSeparator) + CookieJarFileName
+			if err := dependencies.OS.Remove(cookieJarPath); err != nil && !dependencies.OS.IsNotExist(err) {
+				return fmt.Errorf("failed to remove cookie jar: %w", err)
 			}
 
 			dependencies.Logger.Log().Bool("success", true).Send()
